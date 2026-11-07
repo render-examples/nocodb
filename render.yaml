@@ -51,6 +51,10 @@ projects:
               # Never rotate it after you add one.
               - key: NC_CONNECTION_ENCRYPT_KEY
                 generateValue: true
+              # Serve attachments through expiring signed URLs instead of
+              # public /download paths. Upstream's compose examples set this.
+              - key: NC_SECURE_ATTACHMENTS
+                value: "true"
               - key: NC_DISABLE_TELE
                 value: "true"
               - key: NC_DISABLE_MUX

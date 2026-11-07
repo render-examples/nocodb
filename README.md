@@ -85,6 +85,7 @@ curl -fsS "https://<nocodb>.onrender.com/api/v1/health"
 | `NC_CONNECTION_ENCRYPT_KEY` | Generated | Encrypts credentials for external databases you connect. Do not rotate it after you add one. |
 | `DATABASE_URL` | Wired | Internal URL of `nocodb-db`. |
 | `NC_PUBLIC_URL` | Wired | The service's `RENDER_EXTERNAL_URL`. Used in emails, shared links, and webhooks. |
+| `NC_SECURE_ATTACHMENTS` | Blueprint | `true`. Attachments load through expiring signed URLs, not public `/download/...` paths. |
 | `NC_DISABLE_TELE` | Blueprint | `true`. Turns off telemetry. |
 | `NC_DISABLE_MUX` | Blueprint | `true`. Upstream's recommended setting for self-hosting. |
 | `NC_SMTP_*` | Optional | Invite and password-reset emails. See [`.env.example`](./.env.example). |
@@ -102,10 +103,14 @@ Prices from [Render's pricing page](https://render.com/pricing).
 | 1 GB disk | $0.25 |
 | **Total** | **~$31.25** |
 
+Standard is the floor. NocoDB used about 775 MB right after startup, which is more than Starter's 512 MB.
+
 ## Troubleshooting
 
 | Problem | Solution |
 | --- | --- |
+| First deploy fails with `ECONNREFUSED ...:5432` | The service started before `nocodb-db` accepted connections. Render retries, or wait for the database to be **Available** and click **Manual Deploy**. |
+| Logs show `Proxy server listening on port 5433` | NocoDB's Data Reflection feature, a Postgres-protocol proxy to your tables. Render only routes public traffic to 8080, so 5433 is reachable only from your private network. |
 | Admin sign-in fails | The account is created on first boot only. Use the password from the **Environment** page, or reset it from the sign-in page if SMTP is set. |
 | Uploaded files disappear after a deploy | Confirm the disk is mounted at `/usr/app/data`. |
 | Shared links or emails point at the wrong host | `NC_PUBLIC_URL` must be the public URL. Update it after you add a custom domain. |
