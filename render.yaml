@@ -1,0 +1,66 @@
+# yaml-language-server: $schema=https://render.com/schema/render.yaml.json
+#
+# NocoDB wrapper. This repo does not contain the app.
+# The service pulls the official image from Docker Hub at a pinned version.
+# To upgrade, bump the image tag below and push.
+# Upstream: https://github.com/nocodb/nocodb
+
+previews:
+  generation: off
+
+projects:
+  - name: nocodb
+    environments:
+      - name: production
+        services:
+          - type: web
+            name: nocodb
+            runtime: image
+            image:
+              url: docker.io/nocodb/nocodb:2026.10.1
+            plan: standard
+            region: oregon
+            # The community edition runs background jobs in-process, so one
+            # instance, no worker, and no Redis.
+            numInstances: 1
+            healthCheckPath: /api/v1/health
+            disk:
+              # Attachments uploaded in the UI. Metadata and data live in Postgres.
+              name: nocodb-data
+              mountPath: /usr/app/data
+              sizeGB: 1
+            envVars:
+              - key: PORT
+                value: "8080"
+              - key: DATABASE_URL
+                fromDatabase:
+                  name: nocodb-db
+                  property: connectionString
+              - key: NC_PUBLIC_URL
+                fromService:
+                  name: nocodb
+                  type: web
+                  envVarKey: RENDER_EXTERNAL_URL
+              # Super admin, created on first boot. Without these, the first
+              # person to open the URL and sign up becomes admin.
+              - key: NC_ADMIN_EMAIL
+                sync: false
+              - key: NC_ADMIN_PASSWORD
+                generateValue: true
+              # Encrypts credentials for external databases you connect.
+              # Never rotate it after you add one.
+              - key: NC_CONNECTION_ENCRYPT_KEY
+                generateValue: true
+              - key: NC_DISABLE_TELE
+                value: "true"
+              - key: NC_DISABLE_MUX
+                value: "true"
+
+        databases:
+          - name: nocodb-db
+            databaseName: nocodb
+            user: nocodb
+            plan: basic-256mb
+            region: oregon
+            postgresMajorVersion: "16"
+            ipAllowList: []
